@@ -544,6 +544,18 @@ input[type='radio'] {
   background: var(--ok);
 }
 
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: -4px 0 6px;
+  padding: 0 0 0 10px;
+  color: var(--faint);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
 /* 모바일 서랍 */
 .drawer {
   position: absolute;
@@ -977,6 +989,54 @@ input[type='radio'] {
   border-bottom: 1px solid var(--border);
   background: var(--bg-subtle);
 }
+.pane-title {
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 6px 0 14px;
+}
+.pane-title-text {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+.pane-tools {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+.pane-tools .icon-button {
+  width: 28px;
+  min-height: 28px;
+}
+.output-bar {
+  border-top: none;
+  padding-right: 6px;
+}
+.rail-button {
+  flex: 0 0 auto;
+  min-height: 38px;
+  padding: 0 12px;
+  border: none;
+  border-right: 1px solid var(--border);
+  border-radius: 0;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+.rail-button:hover:not(:disabled) {
+  background: var(--accent-soft);
+  border-color: var(--border);
+  color: var(--accent-strong);
+}
+.readme-pane .pane-scroll {
+  flex: 1;
+  min-height: 0;
+  height: auto;
+}
 .pane-footer {
   flex: 0 0 auto;
   display: flex;
@@ -1227,6 +1287,12 @@ input[type='radio'] {
 .assignment-stack .pane {
   height: auto;
   border-top: 1px solid var(--border);
+}
+.assignment-stack .output-bar {
+  border-top: 1px solid var(--border);
+}
+.assignment-stack .output-pane {
+  border-top: none;
 }
 .assignment-stack .editor-host {
   height: 60vh;

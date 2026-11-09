@@ -3,7 +3,7 @@ import { Panel, PanelGroup, PanelResizeHandle, type ImperativePanelHandle } from
 import AskButton from './shared/AskButton';
 import { questionsListUrl } from './shared/ask';
 import AssignmentPage from './shared/AssignmentPage';
-import { ExternalIcon, SidebarIcon } from './shared/icons';
+import { ChevronsLeftIcon, ExternalIcon, SidebarIcon } from './shared/icons';
 import Md from './shared/Md';
 import ProgressPage from './shared/ProgressPage';
 import { useProgress, type Progress } from './shared/progress';
@@ -35,7 +35,9 @@ function StatusDot({ status }: { status: Status }) {
   return <span className={`status-dot is-${status}`} role="img" aria-label={label} title={label} />;
 }
 
-function Sidebar({ current, p }: { current: string; p: Progress }) {
+type SidebarProps = { current: string; p: Progress; onCollapse: () => void; collapseLabel: string };
+
+function Sidebar({ current, p, onCollapse, collapseLabel }: SidebarProps) {
   const item = (target: Page, label: string, opts: { status?: Status; extra?: string } = {}) => {
     const href = toHash(target);
     return (
@@ -49,6 +51,12 @@ function Sidebar({ current, p }: { current: string; p: Progress }) {
 
   return (
     <nav className="sidebar" aria-label="메뉴">
+      <div className="sidebar-header">
+        <span>메뉴</span>
+        <button className="icon-button" onClick={onCollapse} title={`${collapseLabel} (Ctrl+B)`} aria-label={collapseLabel}>
+          <ChevronsLeftIcon size={15} />
+        </button>
+      </div>
       <div className="nav-group">
         {item({ kind: 'home' }, '홈')}
         {item({ kind: 'progress' }, '내 진행 상황 · 공유')}
@@ -276,7 +284,7 @@ export default function App() {
         <div className="body">
           {drawerOpen && <div className="scrim" onClick={() => setDrawerOpen(false)} />}
           <div className={drawerOpen ? 'drawer open' : 'drawer'}>
-            <Sidebar current={current} p={p} />
+            <Sidebar current={current} p={p} onCollapse={() => setDrawerOpen(false)} collapseLabel="메뉴 닫기" />
           </div>
           {content}
         </div>
@@ -294,7 +302,7 @@ export default function App() {
             onCollapse={() => setSidebarCollapsed(true)}
             onExpand={() => setSidebarCollapsed(false)}
           >
-            <Sidebar current={current} p={p} />
+            <Sidebar current={current} p={p} onCollapse={() => sidebarRef.current?.collapse()} collapseLabel="사이드바 접기" />
           </Panel>
           <PanelResizeHandle className="resize-handle vertical" hitAreaMargins={{ coarse: 12, fine: 6 }} />
           <Panel id="content" order={2} minSize={50}>

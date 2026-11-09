@@ -1,4 +1,7 @@
-import { Component, useEffect, useMemo, useReducer, useState, type ComponentType, type ReactNode } from 'react';
+import { Component, useEffect, useMemo, useReducer, useRef, useState, type ComponentType, type ReactNode } from 'react';
+import { Panel, PanelGroup, PanelResizeHandle, type ImperativePanelGroupHandle } from 'react-resizable-panels';
+import { ResetIcon } from './icons';
+import { MOBILE_QUERY, useMediaQuery } from './useMediaQuery';
 import AskButton from './AskButton';
 import { codeBlock, type AskContext } from './ask';
 import CodeEditor from './CodeEditor';
@@ -15,6 +18,7 @@ type State = {
   files: SourceFiles; // 내 코드
   activeFile: string;
   view: 'mine' | 'solution';
+  outputTab: 'results' | 'preview';
   grading: boolean;
   outcome: GradeOutcome | null;
   error: string | null;
@@ -25,6 +29,7 @@ type Action =
   | { type: 'code_edited'; file: string; code: string }
   | { type: 'code_reset'; files: SourceFiles }
   | { type: 'view_changed'; view: State['view'] }
+  | { type: 'output_tab_changed'; tab: State['outputTab'] }
   | { type: 'grading_started' }
   | { type: 'grading_finished'; outcome: GradeOutcome }
   | { type: 'grading_failed'; error: string };
@@ -38,9 +43,12 @@ function reducer(state: State, action: Action): State {
     case 'code_reset':
       return { ...state, files: action.files, outcome: null, error: null };
     case 'view_changed':
-      return { ...state, view: action.view };
+      // 정답 보기에서는 채점 결과 대신 미리보기를 보여줌
+      return { ...state, view: action.view, outputTab: action.view === 'solution' ? 'preview' : state.outputTab };
+    case 'output_tab_changed':
+      return { ...state, outputTab: action.tab };
     case 'grading_started':
-      return { ...state, grading: true, error: null };
+      return { ...state, grading: true, error: null, outputTab: 'results' };
     case 'grading_finished':
       return { ...state, grading: false, outcome: action.outcome };
     case 'grading_failed':
@@ -58,6 +66,7 @@ function init({ topicId, assignment }: { topicId: string; assignment: Assignment
     files,
     activeFile: Object.keys(assignment.files)[0],
     view: 'mine',
+    outputTab: 'preview',
     grading: false,
     outcome: null,
     error: null,
@@ -131,7 +140,12 @@ function Preview({ files, entry }: { files: SourceFiles; entry: string }) {
 // ───────────────────────── 채점 결과 ─────────────────────────
 
 function Results({ state }: { state: State }) {
-  if (state.grading) return <p className="muted">⏳ 채점 중... (테스트를 실행하고 있어요)</p>;
+  if (state.grading)
+    return (
+      <p className="muted" role="status">
+        <span className="spinner" aria-hidden /> 채점 중… 테스트를 실행하고 있어요
+      </p>
+    );
   if (state.error)
     return (
       <div className="explain ng">
@@ -139,7 +153,12 @@ function Results({ state }: { state: State }) {
       </div>
     );
   const o = state.outcome;
-  if (!o) return <p className="muted">코드를 고친 뒤 <strong>▶ 채점하기</strong>를 눌러보세요.</p>;
+  if (!o)
+    return (
+      <p className="muted empty">
+        코드를 고친 뒤 <kbd>▶ 채점하기</kbd>를 누르면 여기에 테스트 결과가 나와요.
+      </p>
+    );
   if (o.compileError)
     return (
       <div className="explain ng">
@@ -151,19 +170,30 @@ function Results({ state }: { state: State }) {
   const all = passed === o.results.length;
   return (
     <div>
-      <p className={all ? 'score ok' : 'score'}>
-        {all ? '🎉 모두 통과!' : '진행 중'} — {passed} / {o.results.length}
-      </p>
+      <div className={all ? 'score ok' : 'score'} role="status">
+        <span>{all ? '🎉 모두 통과!' : '아직 통과하지 못한 테스트가 있어요'}</span>
+        <span className="score-num">
+          {passed} / {o.results.length}
+        </span>
+      </div>
+      <div className="meter score-meter" aria-hidden>
+        <span style={{ width: `${(passed / o.results.length) * 100}%` }} />
+      </div>
       <ul className="results">
-        {o.results.map((r) => (
-          <li key={r.name} className={r.ok ? 'pass' : 'fail'}>
-            <span>{r.ok ? '✅' : '❌'}</span>
-            <div>
-              <div>{r.name}</div>
-              {r.error && <pre>{r.error}</pre>}
-            </div>
-          </li>
-        ))}
+        {/* 실패한 테스트를 먼저 */}
+        {[...o.results]
+          .sort((a, b) => Number(a.ok) - Number(b.ok))
+          .map((r) => (
+            <li key={r.name} className={r.ok ? 'pass' : 'fail'}>
+              <span className="result-icon" aria-label={r.ok ? '통과' : '실패'}>
+                {r.ok ? '✓' : '✕'}
+              </span>
+              <div>
+                <div className="result-name">{r.name}</div>
+                {r.error && <pre>{r.error}</pre>}
+              </div>
+            </li>
+          ))}
       </ul>
     </div>
   );
@@ -233,70 +263,154 @@ export default function AssignmentPage({ topicId, topicTitle, assignment }: Page
     }
   }
 
-  return (
-    <div className="assignment">
-      <div className="readme">
+  const isMobile = useMediaQuery(MOBILE_QUERY);
+  const outerRef = useRef<ImperativePanelGroupHandle>(null);
+  const innerRef = useRef<ImperativePanelGroupHandle>(null);
+  const passedNow = state.outcome && !state.outcome.compileError ? state.outcome.results.filter((r) => r.ok).length : null;
+
+  function resetLayout() {
+    outerRef.current?.setLayout(LAYOUT.outer);
+    innerRef.current?.setLayout(LAYOUT.inner);
+  }
+
+  const readme = (
+    <div className="pane-scroll">
+      <div className="page prose assignment-readme">
         {best && (
-          <p className={best.passed === best.total ? 'badge ok' : 'badge'}>
+          <p className={best.passed === best.total ? 'badge ok not-prose' : 'badge not-prose'}>
             최고 점수 {best.passed} / {best.total}
           </p>
         )}
         <Md>{assignment.readme}</Md>
       </div>
-
-      <div className="workbench">
-        <div className="card editor-card">
-          <div className="file-tabs" role="tablist">
-            {Object.keys(visibleFiles).map((f) => (
-              <button
-                key={f}
-                role="tab"
-                aria-selected={state.activeFile === f}
-                className={state.activeFile === f ? 'active' : ''}
-                onClick={() => dispatch({ type: 'file_selected', file: f })}
-              >
-                {f}
-              </button>
-            ))}
-          </div>
-          <CodeEditor
-            key={state.view + state.activeFile}
-            label={state.activeFile}
-            value={visibleFiles[state.activeFile] ?? ''}
-            readOnly={showingSolution}
-            onChange={(code) => dispatch({ type: 'code_edited', file: state.activeFile, code })}
-          />
-          <div className="row toolbar">
-            <button className="primary" disabled={state.grading || showingSolution} onClick={handleGrade}>
-              ▶ 채점하기
-            </button>
-            <button disabled={showingSolution} onClick={handleReset}>
-              ↺ 시작 코드로
-            </button>
-            <AskButton getContext={askContext} />
-            <label className="toggle-inline">
-              <input
-                type="checkbox"
-                checked={showingSolution}
-                onChange={(e) => dispatch({ type: 'view_changed', view: e.target.checked ? 'solution' : 'mine' })}
-              />{' '}
-              💡 정답 코드 보기 (읽기 전용)
-            </label>
-          </div>
-        </div>
-
-        {!showingSolution && (
-          <section className="card">
-            <h3>채점 결과</h3>
-            <Results state={state} />
-          </section>
-        )}
-
-        <section className="card">
-          <h3>{showingSolution ? '정답 코드 미리보기' : '내 코드 미리보기'}</h3>
-          <Preview files={visibleFiles} entry={assignment.entry} />
-        </section>
-      </div>
     </div>
   );
+
+  const editor = (
+    <section className="pane editor-pane" aria-label="코드 편집기">
+      <div className="pane-header">
+        <div className="file-tabs" role="tablist" aria-label="파일">
+          {Object.keys(visibleFiles).map((f) => (
+            <button
+              key={f}
+              role="tab"
+              aria-selected={state.activeFile === f}
+              onClick={() => dispatch({ type: 'file_selected', file: f })}
+            >
+              {f}
+              {!showingSolution && state.files[f] !== assignment.files[f] && (
+                <span className="dirty" aria-label="수정됨" title="수정됨" />
+              )}
+            </button>
+          ))}
+        </div>
+        <label className="switch" title="모범 답안을 읽기 전용으로 봅니다">
+          <input
+            type="checkbox"
+            role="switch"
+            checked={showingSolution}
+            onChange={(e) => dispatch({ type: 'view_changed', view: e.target.checked ? 'solution' : 'mine' })}
+          />
+          <span className="switch-track" aria-hidden />
+          정답 보기
+        </label>
+      </div>
+      {showingSolution && <div className="solution-banner">💡 모범 답안 (읽기 전용) — 내 코드는 그대로 있어요</div>}
+      <div className="editor-host">
+        <CodeEditor
+          key={state.view + state.activeFile}
+          label={state.activeFile}
+          value={visibleFiles[state.activeFile] ?? ''}
+          readOnly={showingSolution}
+          onChange={(code) => dispatch({ type: 'code_edited', file: state.activeFile, code })}
+        />
+      </div>
+      <div className="pane-footer">
+        <button className="primary" disabled={state.grading || showingSolution} onClick={handleGrade}>
+          ▶ 채점하기
+        </button>
+        <button disabled={showingSolution} onClick={handleReset}>
+          ↺ 시작 코드로
+        </button>
+        <AskButton getContext={askContext} />
+        <span className="spacer" />
+        {!isMobile && (
+          <button className="icon-button" onClick={resetLayout} title="패널 크기 초기화" aria-label="패널 크기 초기화">
+            <ResetIcon size={15} />
+          </button>
+        )}
+      </div>
+    </section>
+  );
+
+  const output = (
+    <section className="pane output-pane" aria-label="결과">
+      <div className="pane-header">
+        <div className="file-tabs sans" role="tablist" aria-label="결과 보기">
+          {!showingSolution && (
+            <button
+              role="tab"
+              aria-selected={state.outputTab === 'results'}
+              onClick={() => dispatch({ type: 'output_tab_changed', tab: 'results' })}
+            >
+              채점 결과
+              {passedNow !== null && (
+                <span className={passedNow === state.outcome!.results.length ? 'pill ok' : 'pill'}>
+                  {passedNow}/{state.outcome!.results.length}
+                </span>
+              )}
+            </button>
+          )}
+          <button
+            role="tab"
+            aria-selected={state.outputTab === 'preview'}
+            onClick={() => dispatch({ type: 'output_tab_changed', tab: 'preview' })}
+          >
+            {showingSolution ? '정답 미리보기' : '미리보기'}
+          </button>
+        </div>
+      </div>
+      <div className="pane-body">
+        {state.outputTab === 'results' && !showingSolution ? (
+          <Results state={state} />
+        ) : (
+          <div className="preview-frame">
+            <Preview files={visibleFiles} entry={assignment.entry} />
+          </div>
+        )}
+      </div>
+    </section>
+  );
+
+  if (isMobile) {
+    return (
+      <div className="assignment-stack">
+        {readme}
+        {editor}
+        {output}
+      </div>
+    );
+  }
+
+  return (
+    <PanelGroup ref={outerRef} direction="horizontal" autoSaveId="fd:assignment" className="assignment-layout">
+      <Panel id="readme" order={1} defaultSize={LAYOUT.outer[0]} minSize={20}>
+        {readme}
+      </Panel>
+      <PanelResizeHandle className="resize-handle vertical" />
+      <Panel id="workbench" order={2} defaultSize={LAYOUT.outer[1]} minSize={35}>
+        <PanelGroup ref={innerRef} direction="vertical" autoSaveId="fd:workbench">
+          <Panel id="editor" order={1} defaultSize={LAYOUT.inner[0]} minSize={25}>
+            {editor}
+          </Panel>
+          <PanelResizeHandle className="resize-handle horizontal" />
+          <Panel id="output" order={2} defaultSize={LAYOUT.inner[1]} minSize={12}>
+            {output}
+          </Panel>
+        </PanelGroup>
+      </Panel>
+    </PanelGroup>
+  );
 }
+
+const LAYOUT = { outer: [40, 60], inner: [60, 40] };

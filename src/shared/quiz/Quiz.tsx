@@ -26,7 +26,7 @@ export default function Quiz({ topicId, topicTitle, questions, levels: topicLeve
   const q = list[state.index];
 
   return (
-    <div className="quiz">
+    <div className="page quiz">
       <div className="levels">
         {levels.map((lv) => (
           <button

@@ -20,7 +20,7 @@ export default function ProgressPage({ topics }: { topics: Topic[] }) {
   }
 
   return (
-    <div className="readme">
+    <div className="page prose">
       <h1>📊 내 진행 상황</h1>
       <p className="muted">
         진행 상황과 작성한 코드는 <strong>이 브라우저에만</strong> 저장됩니다. 다른 사람에게 보여주려면 공유 링크를, 다른 기기에서 이어 하려면 백업을 쓰세요.

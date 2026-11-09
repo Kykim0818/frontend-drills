@@ -1,19 +1,18 @@
 import { javascript } from '@codemirror/lang-javascript';
+import { EditorView } from '@codemirror/view';
+import { githubDark, githubLight } from '@uiw/codemirror-theme-github';
 import CodeMirror from '@uiw/react-codemirror';
-import { useSyncExternalStore } from 'react';
+import { useTheme } from './theme';
 
-const extensions = [javascript({ jsx: true, typescript: true })];
-
-const darkQuery = typeof window !== 'undefined' ? window.matchMedia('(prefers-color-scheme: dark)') : null;
-function useDarkMode() {
-  return useSyncExternalStore(
-    (cb) => {
-      darkQuery?.addEventListener('change', cb);
-      return () => darkQuery?.removeEventListener('change', cb);
-    },
-    () => darkQuery?.matches ?? false,
-  );
-}
+const extensions = [
+  javascript({ jsx: true, typescript: true }),
+  EditorView.theme({
+    '&': { fontSize: 'var(--code-size)', height: '100%' },
+    '.cm-scroller': { fontFamily: 'var(--font-mono)', lineHeight: '1.65' },
+    '.cm-gutters': { borderRight: '1px solid var(--border)' },
+    '&.cm-focused': { outline: 'none' },
+  }),
+];
 
 type Props = {
   value: string;
@@ -23,7 +22,7 @@ type Props = {
 };
 
 export default function CodeEditor({ value, onChange, readOnly, label }: Props) {
-  const dark = useDarkMode();
+  const theme = useTheme();
   return (
     <CodeMirror
       className="editor"
@@ -32,10 +31,10 @@ export default function CodeEditor({ value, onChange, readOnly, label }: Props) 
       onChange={onChange}
       readOnly={readOnly}
       editable={!readOnly}
-      theme={dark ? 'dark' : 'light'}
+      theme={theme === 'dark' ? githubDark : githubLight}
       extensions={extensions}
       basicSetup={{ tabSize: 2, foldGutter: false }}
-      height="440px"
+      height="100%"
     />
   );
 }

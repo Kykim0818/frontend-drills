@@ -64,4 +64,5 @@ src/
 ## 새 토픽 추가하기
 [docs/ADDING_A_TOPIC.md](docs/ADDING_A_TOPIC.md)를 참고하세요.
 
-> 기술 스택: React 19 · TypeScript · Vite · CodeMirror · Sucrase · Testing Library · Vitest
+> 기술 스택: React 19 · TypeScript · Vite · CodeMirror · Sucrase · react-resizable-panels · Testing Library · Vitest
+> 글꼴: [Pretendard](https://github.com/orioncactus/pretendard) (본문), [JetBrains Mono](https://www.jetbrains.com/lp/mono/) (코드)

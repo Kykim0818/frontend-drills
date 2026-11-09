@@ -6,7 +6,7 @@ export default function SharePage({ data, topics }: { data: string; topics: Topi
   if (!share) return <p>공유 링크가 올바르지 않습니다.</p>;
 
   return (
-    <div className="readme">
+    <div className="page prose">
       <h1>🏅 {share.n} 님의 frontend-drills 기록</h1>
       <p className="muted">{share.d} 기준</p>
       {Object.entries(share.t).map(([topicId, s]) => {

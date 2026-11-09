@@ -1,41 +1,103 @@
+import { pickFiles } from '../../shared/files';
 import type { Assignment, Topic } from '../../shared/types';
 import concepts from './concepts.md?raw';
 import { levels, questions } from './questions';
+import { runCartSuite } from './specs/cart.suite';
+import { runCounterSuite } from './specs/counter.suite';
+import { runFetchSuite } from './specs/fetch.suite';
+import { runLazyInitSuite } from './specs/lazyInit.suite';
+import { runMessengerSuite } from './specs/messenger.suite';
+import { runMyUseReducerSuite } from './specs/myUseReducer.suite';
+import { runReducerContextSuite } from './specs/reducerContext.suite';
+import { runTasksSuite } from './specs/tasks.suite';
 
-import readme1 from './assignments/01-counter/README.md?raw';
-import Mine1 from './assignments/01-counter/Counter';
-import Sol1 from './solutions/01-counter/Counter';
-import readme2 from './assignments/02-tasks/README.md?raw';
-import Mine2 from './assignments/02-tasks/TaskApp';
-import Sol2 from './solutions/02-tasks/TaskApp';
-import readme3 from './assignments/03-cart-bugs/README.md?raw';
-import Mine3 from './assignments/03-cart-bugs/CartApp';
-import Sol3 from './solutions/03-cart-bugs/CartApp';
-import readme4 from './assignments/04-messenger/README.md?raw';
-import Mine4 from './assignments/04-messenger/Messenger';
-import Sol4 from './solutions/04-messenger/Messenger';
-import readme5 from './assignments/05-lazy-init/README.md?raw';
-import Mine5 from './assignments/05-lazy-init/TodoList';
-import Sol5 from './solutions/05-lazy-init/TodoList';
-import readme6 from './assignments/06-my-usereducer/README.md?raw';
-import Mine6 from './assignments/06-my-usereducer/Demo';
-import Sol6 from './solutions/06-my-usereducer/Demo';
-import readme7 from './assignments/07-reducer-context/README.md?raw';
-import Mine7 from './assignments/07-reducer-context/TaskApp';
-import Sol7 from './solutions/07-reducer-context/TaskApp';
-import readme8 from './assignments/08-fetch-state-machine/README.md?raw';
-import Mine8 from './assignments/08-fetch-state-machine/UserProfile';
-import Sol8 from './solutions/08-fetch-state-machine/UserProfile';
+// 과제 폴더의 소스를 문자열로 가져옵니다. (테스트 파일 제외)
+const raw = import.meta.glob(
+  ['./assignments/*/*.{md,ts,tsx}', './solutions/*/*.{ts,tsx}', '!./**/*.test.tsx'],
+  { query: '?raw', import: 'default', eager: true },
+) as Record<string, string>;
+
+function define(
+  id: string,
+  title: string,
+  folder: string,
+  order: string[],
+  entry: string,
+  grade: Assignment['grade'],
+): Assignment {
+  return {
+    id,
+    title,
+    folder,
+    readme: raw[`./assignments/${folder}/README.md`],
+    files: pickFiles(raw, `./assignments/${folder}/`, order),
+    solutionFiles: pickFiles(raw, `./solutions/${folder}/`, order),
+    entry,
+    grade,
+  };
+}
 
 const assignments: Assignment[] = [
-  { id: '01', title: 'useState → useReducer', folder: '01-counter', readme: readme1, Mine: Mine1, Solution: Sol1 },
-  { id: '02', title: '할 일 목록 리팩터링', folder: '02-tasks', readme: readme2, Mine: Mine2, Solution: Sol2 },
-  { id: '03', title: '버그 사냥 (순수성)', folder: '03-cart-bugs', readme: readme3, Mine: Mine3, Solution: Sol3 },
-  { id: '04', title: '메신저 (챌린지)', folder: '04-messenger', readme: readme4, Mine: Mine4, Solution: Sol4 },
-  { id: '05', title: '초기화 함수 & key', folder: '05-lazy-init', readme: readme5, Mine: Mine5, Solution: Sol5 },
-  { id: '06', title: 'useReducer 직접 구현', folder: '06-my-usereducer', readme: readme6, Mine: Mine6, Solution: Sol6 },
-  { id: '07', title: '리듀서 + 컨텍스트', folder: '07-reducer-context', readme: readme7, Mine: Mine7, Solution: Sol7 },
-  { id: '08', title: '(심화) 비동기 상태 머신', folder: '08-fetch-state-machine', readme: readme8, Mine: Mine8, Solution: Sol8 },
+  define('01', 'useState → useReducer', '01-counter', ['reducer.ts', 'Counter.tsx'], 'Counter', (m) =>
+    runCounterSuite({
+      counterReducer: m.reducer.counterReducer,
+      initialCounterState: m.reducer.initialCounterState,
+      Counter: m.Counter.default,
+    }),
+  ),
+  define('02', '할 일 목록 리팩터링', '02-tasks', ['tasksReducer.ts', 'TaskApp.tsx'], 'TaskApp', (m) =>
+    runTasksSuite({ tasksReducer: m.tasksReducer.tasksReducer, TaskApp: m.TaskApp.default }),
+  ),
+  define('03', '버그 사냥 (순수성)', '03-cart-bugs', ['cartReducer.ts', 'CartApp.tsx'], 'CartApp', (m) =>
+    runCartSuite({ cartReducer: m.cartReducer.cartReducer, CartApp: m.CartApp.default }),
+  ),
+  define(
+    '04',
+    '메신저 (챌린지)',
+    '04-messenger',
+    ['messengerReducer.ts', 'Chat.tsx', 'ContactList.tsx', 'Messenger.tsx'],
+    'Messenger',
+    (m) =>
+      runMessengerSuite({
+        messengerReducer: m.messengerReducer.messengerReducer,
+        initialState: m.messengerReducer.initialState,
+        Messenger: m.Messenger.default,
+      }),
+  ),
+  define('05', '초기화 함수 & key', '05-lazy-init', ['todosReducer.ts', 'TodoList.tsx'], 'TodoList', (m) =>
+    runLazyInitSuite({
+      todosReducer: m.todosReducer.todosReducer,
+      createInitialState: m.todosReducer.createInitialState,
+      TodoList: m.TodoList.TodoList,
+      TodoApp: m.TodoList.default,
+    }),
+  ),
+  define('06', 'useReducer 직접 구현', '06-my-usereducer', ['useMyReducer.ts', 'Demo.tsx'], 'Demo', (m) =>
+    runMyUseReducerSuite(m.useMyReducer.useMyReducer),
+  ),
+  define(
+    '07',
+    '리듀서 + 컨텍스트',
+    '07-reducer-context',
+    ['TasksContext.tsx', 'AddTask.tsx', 'TaskList.tsx', 'TaskApp.tsx'],
+    'TaskApp',
+    (m) =>
+      runReducerContextSuite({
+        TasksProvider: m.TasksContext.TasksProvider,
+        useTasks: m.TasksContext.useTasks,
+        useTasksDispatch: m.TasksContext.useTasksDispatch,
+        AddTask: m.AddTask.default,
+        TaskList: m.TaskList.default,
+      }),
+  ),
+  define(
+    '08',
+    '(심화) 비동기 상태 머신',
+    '08-fetch-state-machine',
+    ['fetchReducer.ts', 'UserProfile.tsx'],
+    'UserProfile',
+    (m) => runFetchSuite({ fetchReducer: m.fetchReducer.fetchReducer, UserProfile: m.UserProfile.UserProfile }),
+  ),
 ];
 
 const topic: Topic = {

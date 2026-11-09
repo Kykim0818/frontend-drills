@@ -20,8 +20,6 @@
 | 08 | (심화) 비동기 상태 머신 | 판별 유니온, 상태 전이, effect와 race condition | [Choosing the State Structure](https://react.dev/learn/choosing-the-state-structure#avoid-contradictions-in-state) |
 
 ## 채점
-```bash
-npx vitest react-usereducer/assignments
-```
+웹페이지의 과제 화면에서 **▶ 채점하기**를 누르세요. 로컬에서 파일로 풀 때는 `npx vitest react-usereducer/assignments`.
 
 > 💡 앱의 퀴즈 화면(`src/shared/quiz/quizReducer.ts`)과 사이드바 네비게이션(`src/App.tsx`)도 `useReducer`로 만들어져 있습니다. 다 풀고 나서 읽어보세요.

@@ -29,7 +29,7 @@
 - [ ] 리듀서가 배열을 `push`/`splice` 하지 않고 `[...]`, `map`, `filter`로 새 배열을 만드는가?
 - [ ] 리듀서를 **컴포넌트 바깥**에 선언했는가?
 
-## 확인
-```bash
-npx vitest react-usereducer/assignments/02-tasks
-```
+## 채점
+오른쪽 편집기에서 코드를 고치고 **▶ 채점하기**를 누르세요. 작성한 코드는 브라우저에 자동 저장됩니다.
+
+> 로컬에서 파일로 풀고 있다면: `npx vitest react-usereducer/assignments/02-tasks`

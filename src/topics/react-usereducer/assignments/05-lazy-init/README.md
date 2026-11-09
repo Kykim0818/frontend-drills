@@ -28,7 +28,7 @@ useReducer(reducer, initialArg, init?)
    - ❓ `username` prop이 바뀌어도 `init`은 다시 실행되지 않습니다. 왜일까요?
    - 💡 리듀서/effect를 건드리지 말고 **`key`** 로 해결하세요.
 
-## 확인
-```bash
-npx vitest react-usereducer/assignments/05-lazy-init
-```
+## 채점
+오른쪽 편집기에서 코드를 고치고 **▶ 채점하기**를 누르세요. 작성한 코드는 브라우저에 자동 저장됩니다.
+
+> 로컬에서 파일로 풀고 있다면: `npx vitest react-usereducer/assignments/05-lazy-init`

@@ -1,11 +1,22 @@
-import { useReducer } from 'react';
+import { useEffect, useReducer } from 'react';
+import { progress } from '../progress';
 import Md from '../Md';
 import type { Question } from '../types';
 import { filterQuestions, initialQuizState, quizReducer } from './quizReducer';
 
-export default function Quiz({ questions, levels: topicLevels }: { questions: Question[]; levels: string[] }) {
+type Props = { topicId: string; questions: Question[]; levels: string[] };
+
+export default function Quiz({ topicId, questions, levels: topicLevels }: Props) {
   const levels = ['전체', ...topicLevels];
-  const [state, dispatch] = useReducer(quizReducer, initialQuizState);
+  // 저장된 답이 있으면 이어서 풀기 (init 함수로 첫 렌더링에만 읽음)
+  const [state, dispatch] = useReducer(quizReducer, topicId, (id) => ({
+    ...initialQuizState,
+    answers: progress.get().quiz[id] ?? {},
+  }));
+
+  useEffect(() => {
+    progress.setQuizAnswers(topicId, state.answers);
+  }, [topicId, state.answers]);
   const list = filterQuestions(questions, state.level);
   const total = list.length;
   const answeredInList = list.filter((q) => q.id in state.answers);

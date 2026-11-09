@@ -30,7 +30,7 @@ function dispatch(action) {
 - 실제 React는 dispatch 때 리듀서를 **바로** 실행하지 않고 다음 렌더링 때 실행합니다. 그래서 dispatch 직후 `console.log(state)`는 왜 **이전 값**을 출력할까요?
 - 내 구현에서 리듀서가 이전 state와 `Object.is`로 같은 값을 반환하면 리렌더링이 일어날까요?
 
-## 확인
-```bash
-npx vitest react-usereducer/assignments/06-my-usereducer
-```
+## 채점
+오른쪽 편집기에서 코드를 고치고 **▶ 채점하기**를 누르세요. 작성한 코드는 브라우저에 자동 저장됩니다.
+
+> 로컬에서 파일로 풀고 있다면: `npx vitest react-usereducer/assignments/06-my-usereducer`

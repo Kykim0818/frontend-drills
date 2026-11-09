@@ -26,10 +26,10 @@
 - 리듀서는 **순수 함수**여야 합니다. 절대 `state`를 직접 수정하지 마세요. (테스트가 얼린 객체를 넣습니다)
 - `Counter`의 UI(버튼 텍스트, `data-testid`)는 바꾸지 마세요. 테스트가 사용합니다.
 
-## 확인
-```bash
-npx vitest react-usereducer/assignments/01-counter
-```
+## 채점
+오른쪽 편집기에서 코드를 고치고 **▶ 채점하기**를 누르세요. 작성한 코드는 브라우저에 자동 저장됩니다.
+
+> 로컬에서 파일로 풀고 있다면: `npx vitest react-usereducer/assignments/01-counter`
 
 ## 생각해볼 질문
 1. "0 미만 금지" 규칙을 이벤트 핸들러에 두는 것과 리듀서에 두는 것은 어떤 차이가 있나요?

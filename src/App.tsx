@@ -1,99 +1,134 @@
-import { useReducer } from 'react';
+import { useEffect, useReducer } from 'react';
 import AssignmentPage from './shared/AssignmentPage';
 import Md from './shared/Md';
+import ProgressPage from './shared/ProgressPage';
+import { useProgress } from './shared/progress';
 import Quiz from './shared/quiz/Quiz';
+import { parseHash, toHash, type Page } from './shared/route';
+import { isCleared, quizScore } from './shared/score';
+import SharePage from './shared/SharePage';
 import { topics } from './topics';
 
-type Page =
-  | { kind: 'home' }
-  | { kind: 'concepts'; topicId: string }
-  | { kind: 'quiz'; topicId: string }
-  | { kind: 'assignment'; topicId: string; id: string };
+type NavAction = { type: 'hash_changed'; hash: string };
 
-type NavAction = { type: 'navigated'; page: Page };
-
-// 네비게이션도 리듀서로 ✋
+// 네비게이션도 리듀서로 ✋ (주소의 #해시 가 바뀌면 페이지 state 를 다시 계산)
 function navReducer(_state: Page, action: NavAction): Page {
   switch (action.type) {
-    case 'navigated':
-      return action.page;
+    case 'hash_changed':
+      return parseHash(action.hash);
   }
 }
 
-function isActive(page: Page, target: Page) {
-  return JSON.stringify(page) === JSON.stringify(target);
-}
-
 export default function App() {
-  const [page, dispatch] = useReducer(navReducer, { kind: 'home' });
-  const go = (p: Page) => dispatch({ type: 'navigated', page: p });
-  const topic = page.kind === 'home' ? null : topics.find((t) => t.id === page.topicId)!;
-  const assignment =
-    page.kind === 'assignment' && topic ? topic.assignments.find((a) => a.id === page.id)! : null;
+  const [page, dispatch] = useReducer(navReducer, location.hash, parseHash);
+  const p = useProgress();
 
-  const navButton = (target: Page, label: string) => (
-    <button key={label} className={isActive(page, target) ? 'active' : ''} onClick={() => go(target)}>
-      {label}
-    </button>
-  );
+  useEffect(() => {
+    const onHash = () => {
+      dispatch({ type: 'hash_changed', hash: location.hash });
+      window.scrollTo(0, 0);
+    };
+    window.addEventListener('hashchange', onHash);
+    return () => window.removeEventListener('hashchange', onHash);
+  }, []);
+
+  const topic = 'topicId' in page ? topics.find((t) => t.id === page.topicId) : undefined;
+  const assignment = page.kind === 'assignment' && topic ? topic.assignments.find((a) => a.id === page.id) : undefined;
+  const current = toHash(page);
+
+  const link = (target: Page, label: string, extra?: string) => {
+    const href = toHash(target);
+    return (
+      <a key={href} href={href} className={current === href ? 'active' : ''}>
+        <span>{label}</span>
+        {extra && <span className="nav-extra">{extra}</span>}
+      </a>
+    );
+  };
 
   return (
     <div className="layout">
       <nav className="sidebar">
         <h1>
-          <button className="brand" onClick={() => go({ kind: 'home' })}>
+          <a className="brand" href="#/">
             🏋️ frontend-drills
-          </button>
+          </a>
         </h1>
-        {topics.map((t) => (
-          <div key={t.id} className="topic-nav">
-            <p className="section">
-              {t.emoji} {t.title}
-            </p>
-            {navButton({ kind: 'concepts', topicId: t.id }, '📘 핵심 개념')}
-            {navButton({ kind: 'quiz', topicId: t.id }, `❓ 퀴즈 (${t.questions.length})`)}
-            {t.assignments.map((a) =>
-              navButton({ kind: 'assignment', topicId: t.id, id: a.id }, `${a.id}. ${a.title}`),
-            )}
-          </div>
-        ))}
-        <p className="muted small">
-          <code>npm test</code> 로 내 과제를 채점하세요.
-        </p>
+        {link({ kind: 'progress' }, '📊 내 진행 상황 · 공유')}
+        {topics.map((t) => {
+          const q = quizScore(t, p);
+          return (
+            <div key={t.id} className="topic-nav">
+              <p className="section">
+                {t.emoji} {t.title}
+              </p>
+              {link({ kind: 'concepts', topicId: t.id }, '📘 핵심 개념')}
+              {link({ kind: 'quiz', topicId: t.id }, '❓ 퀴즈', `${q.correct}/${q.total}`)}
+              {t.assignments.map((a) =>
+                link(
+                  { kind: 'assignment', topicId: t.id, id: a.id },
+                  `${a.id}. ${a.title}`,
+                  isCleared(t, a.id, p) ? '✅' : p.assignments[`${t.id}/${a.id}`] ? '🟡' : '',
+                ),
+              )}
+            </div>
+          );
+        })}
       </nav>
       <main className="content">
         {page.kind === 'home' && (
           <div className="readme">
             <h1>🏋️ frontend-drills</h1>
             <p>
-              공식 문서를 바탕으로 만든 프론트엔드 <strong>퀴즈 + 과제</strong> 모음입니다. 개념 정리 → 퀴즈 →
-              과제(테스트로 자동 채점) 순서로 연습하세요.
+              공식 문서를 바탕으로 만든 프론트엔드 <strong>퀴즈 + 과제</strong> 모음입니다. 설치 없이 이 페이지에서 바로
+              풀 수 있어요.
             </p>
+            <ol>
+              <li>
+                <strong>핵심 개념</strong>을 읽고
+              </li>
+              <li>
+                <strong>퀴즈</strong>를 풀고 (해설 + 공식 문서 링크)
+              </li>
+              <li>
+                <strong>과제</strong>는 화면 안의 코드 편집기에서 고친 뒤 <strong>▶ 채점하기</strong>
+              </li>
+              <li>
+                <strong>📊 내 진행 상황</strong>에서 공유 링크로 점수 자랑하기
+              </li>
+            </ol>
             <div className="topic-grid">
-              {topics.map((t) => (
-                <button key={t.id} className="card topic-card" onClick={() => go({ kind: 'concepts', topicId: t.id })}>
-                  <span className="topic-emoji">{t.emoji}</span>
-                  <strong>{t.title}</strong>
-                  <span className="muted">{t.description}</span>
-                  <span className="tag">
-                    퀴즈 {t.questions.length}문제 · 과제 {t.assignments.length}개
-                  </span>
-                </button>
-              ))}
+              {topics.map((t) => {
+                const q = quizScore(t, p);
+                const cleared = t.assignments.filter((a) => isCleared(t, a.id, p)).length;
+                return (
+                  <a key={t.id} className="card topic-card" href={toHash({ kind: 'concepts', topicId: t.id })}>
+                    <span className="topic-emoji">{t.emoji}</span>
+                    <strong>{t.title}</strong>
+                    <span className="muted">{t.description}</span>
+                    <span className="tag">
+                      퀴즈 {q.correct}/{q.total} · 과제 {cleared}/{t.assignments.length}
+                    </span>
+                  </a>
+                );
+              })}
             </div>
           </div>
         )}
+        {page.kind === 'progress' && <ProgressPage topics={topics} />}
+        {page.kind === 'share' && <SharePage data={page.data} topics={topics} />}
         {page.kind === 'concepts' && topic && (
           <div className="readme">
             <Md>{topic.concepts}</Md>
           </div>
         )}
         {page.kind === 'quiz' && topic && (
-          <Quiz key={topic.id} questions={topic.questions} levels={topic.levels} />
+          <Quiz key={topic.id} topicId={topic.id} questions={topic.questions} levels={topic.levels} />
         )}
         {assignment && topic && (
           <AssignmentPage key={topic.id + assignment.id} topicId={topic.id} assignment={assignment} />
         )}
+        {'topicId' in page && !topic && <p>존재하지 않는 페이지입니다. <a href="#/">홈으로</a></p>}
       </main>
     </div>
   );

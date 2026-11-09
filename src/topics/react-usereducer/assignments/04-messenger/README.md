@@ -33,7 +33,7 @@ type MessengerState = {
 - `edited_message`, `sent_message`는 **현재 선택된 연락처**의 초안만 바꿉니다.
 - 💡 **리듀서만** 바꾸고 컴포넌트는 최소한으로 고치는 게 포인트입니다. 리듀서가 로직을 품고 있으면 UI는 거의 안 바뀝니다.
 
-## 확인
-```bash
-npx vitest react-usereducer/assignments/04-messenger
-```
+## 채점
+오른쪽 편집기에서 코드를 고치고 **▶ 채점하기**를 누르세요. 작성한 코드는 브라우저에 자동 저장됩니다.
+
+> 로컬에서 파일로 풀고 있다면: `npx vitest react-usereducer/assignments/04-messenger`

@@ -30,7 +30,7 @@
 - `AddTask`, `TaskList`, `Task`는 **props가 없어야** 합니다.
 - `TaskApp`은 `TasksProvider`로 감싸기만 합니다.
 
-## 확인
-```bash
-npx vitest react-usereducer/assignments/07-reducer-context
-```
+## 채점
+오른쪽 편집기에서 코드를 고치고 **▶ 채점하기**를 누르세요. 작성한 코드는 브라우저에 자동 저장됩니다.
+
+> 로컬에서 파일로 풀고 있다면: `npx vitest react-usereducer/assignments/07-reducer-context`

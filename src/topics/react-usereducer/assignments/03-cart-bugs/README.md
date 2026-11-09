@@ -24,7 +24,7 @@
 - React는 `Object.is(이전 state, 다음 state)`가 `true`이면 변경이 없다고 판단합니다.
 - Strict Mode는 개발 중에 리듀서를 **두 번 호출**해서 불순한 리듀서를 드러냅니다.
 
-## 확인
-```bash
-npx vitest react-usereducer/assignments/03-cart-bugs
-```
+## 채점
+오른쪽 편집기에서 코드를 고치고 **▶ 채점하기**를 누르세요. 작성한 코드는 브라우저에 자동 저장됩니다.
+
+> 로컬에서 파일로 풀고 있다면: `npx vitest react-usereducer/assignments/03-cart-bugs`

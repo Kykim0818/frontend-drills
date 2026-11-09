@@ -40,7 +40,7 @@ type FetchState<T> =
 - 💡 "다시 시도"는 어떻게 effect를 다시 실행시킬까요? 리듀서 state에 요청 횟수 같은 값을 넣는 방법,
   별도 `useState`를 두는 방법 등이 있습니다. 자유롭게!
 
-## 확인
-```bash
-npx vitest react-usereducer/assignments/08-fetch-state-machine
-```
+## 채점
+오른쪽 편집기에서 코드를 고치고 **▶ 채점하기**를 누르세요. 작성한 코드는 브라우저에 자동 저장됩니다.
+
+> 로컬에서 파일로 풀고 있다면: `npx vitest react-usereducer/assignments/08-fetch-state-machine`

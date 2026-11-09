@@ -1,4 +1,4 @@
-import type { ComponentType } from 'react';
+import type { Modules, SourceFiles } from './grader/compile';
 
 export type Question = {
   id: number;
@@ -17,8 +17,14 @@ export type Assignment = {
   title: string;
   folder: string; // assignments/ 아래 폴더 이름
   readme: string;
-  Mine: ComponentType;
-  Solution: ComponentType;
+  /** 시작 코드 (파일 이름 → 소스). 편집기 탭 순서 = 객체 키 순서 */
+  files: SourceFiles;
+  /** 모범 답안 */
+  solutionFiles: SourceFiles;
+  /** 미리보기로 렌더링할 모듈 이름 (그 모듈의 default export 컴포넌트) */
+  entry: string;
+  /** 컴파일된 모듈을 받아 채점 suite 를 등록 */
+  grade: (modules: Modules) => void;
 };
 
 export type Topic = {

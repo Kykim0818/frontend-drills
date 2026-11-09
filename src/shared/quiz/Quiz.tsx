@@ -1,12 +1,14 @@
 import { useEffect, useReducer } from 'react';
 import { progress } from '../progress';
+import AskButton from '../AskButton';
+import { codeBlock } from '../ask';
 import Md from '../Md';
 import type { Question } from '../types';
 import { filterQuestions, initialQuizState, quizReducer } from './quizReducer';
 
-type Props = { topicId: string; questions: Question[]; levels: string[] };
+type Props = { topicId: string; topicTitle: string; questions: Question[]; levels: string[] };
 
-export default function Quiz({ topicId, questions, levels: topicLevels }: Props) {
+export default function Quiz({ topicId, topicTitle, questions, levels: topicLevels }: Props) {
   const levels = ['전체', ...topicLevels];
   // 저장된 답이 있으면 이어서 풀기 (init 함수로 첫 렌더링에만 읽음)
   const [state, dispatch] = useReducer(quizReducer, topicId, (id) => ({
@@ -46,9 +48,34 @@ export default function Quiz({ topicId, questions, levels: topicLevels }: Props)
 
       {q ? (
         <article className="card question">
-          <p className="tag">
-            Q{q.id} · {q.level}
-          </p>
+          <div className="question-head">
+            <p className="tag">
+              Q{q.id} · {q.level}
+            </p>
+            <AskButton
+              label="❓ 이 문제 질문하기"
+              getContext={() => {
+                const picked = state.answers[q.id];
+                const lines = [
+                  `### 문제 Q${q.id} (${q.level})`,
+                  q.question,
+                  q.code ? codeBlock(q.code, 'js') : '',
+                  '### 보기',
+                  ...q.choices.map((c, i) => `${i + 1}. ${c}${i === picked ? '  ← 내가 고른 답' : ''}`),
+                  picked === undefined
+                    ? '_(아직 답을 고르지 않음)_'
+                    : `\n정답: ${q.answer + 1}번 / 내 답: ${picked + 1}번 ${picked === q.answer ? '✅' : '❌'}`,
+                  `\n📖 ${q.docs.label}: ${q.docs.url}`,
+                ];
+                return {
+                  where: `${topicTitle} › 퀴즈 Q${q.id}`,
+                  short: `퀴즈 Q${q.id}`,
+                  details: lines.filter(Boolean).join('\n'),
+                  hash: `#/t/${topicId}/quiz`,
+                };
+              }}
+            />
+          </div>
           <div className="q-title">
             <Md>{q.question}</Md>
           </div>

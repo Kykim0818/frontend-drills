@@ -1,4 +1,6 @@
 import { Component, useEffect, useMemo, useReducer, useState, type ComponentType, type ReactNode } from 'react';
+import AskButton from './AskButton';
+import { codeBlock, type AskContext } from './ask';
 import CodeEditor from './CodeEditor';
 import { loadModules, type SourceFiles } from './grader/compile';
 import { gradeInIframe } from './grader/gradeInIframe';
@@ -169,7 +171,9 @@ function Results({ state }: { state: State }) {
 
 // ───────────────────────── 페이지 ─────────────────────────
 
-export default function AssignmentPage({ topicId, assignment }: { topicId: string; assignment: Assignment }) {
+type PageProps = { topicId: string; topicTitle: string; assignment: Assignment };
+
+export default function AssignmentPage({ topicId, topicTitle, assignment }: PageProps) {
   const [state, dispatch] = useReducer(reducer, { topicId, assignment }, init);
   const p = useProgress();
   const best = p.assignments[`${topicId}/${assignment.id}`];
@@ -194,6 +198,33 @@ export default function AssignmentPage({ topicId, assignment }: { topicId: strin
     } catch (e) {
       dispatch({ type: 'grading_failed', error: e instanceof Error ? e.message : String(e) });
     }
+  }
+
+  function askContext(): AskContext {
+    const changed = Object.keys(state.files).filter((f) => state.files[f] !== assignment.files[f]);
+    const o = state.outcome;
+    const lines: string[] = [];
+    if (o?.compileError) {
+      lines.push('### 컴파일 에러', codeBlock(o.compileError, 'text'));
+    } else if (o) {
+      const failed = o.results.filter((r) => !r.ok);
+      lines.push(`### 마지막 채점: ${o.results.length - failed.length} / ${o.results.length} 통과`);
+      for (const r of failed) lines.push(`- ❌ ${r.name}`, r.error ? codeBlock(r.error, 'text') : '');
+    } else {
+      lines.push('_(아직 채점하지 않음)_');
+    }
+    // 지금 보고 있는 파일을 먼저, 그다음 고친 파일들
+    const files = [state.activeFile, ...changed.filter((f) => f !== state.activeFile)];
+    lines.push('### 내 코드');
+    for (const f of files) {
+      lines.push(`**${f}**${changed.includes(f) ? '' : ' (시작 코드 그대로)'}`, codeBlock(state.files[f] ?? ''));
+    }
+    return {
+      where: `${topicTitle} › 과제 ${assignment.id}. ${assignment.title}`,
+      short: `과제 ${assignment.id}`,
+      details: lines.filter(Boolean).join('\n'),
+      hash: `#/t/${topicId}/a/${assignment.id}`,
+    };
   }
 
   function handleReset() {
@@ -242,6 +273,7 @@ export default function AssignmentPage({ topicId, assignment }: { topicId: strin
             <button disabled={showingSolution} onClick={handleReset}>
               ↺ 시작 코드로
             </button>
+            <AskButton getContext={askContext} />
             <label className="toggle-inline">
               <input
                 type="checkbox"

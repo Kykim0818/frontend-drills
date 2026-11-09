@@ -1,0 +1,32 @@
+name: ❓ 질문하기
+description: 개념, 퀴즈, 과제를 풀다가 이해가 안 되는 부분을 질문해요
+title: "[질문] "
+labels: ["question"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        웹페이지의 **❓ 질문하기** 버튼으로 오면 아래 칸이 자동으로 채워져 있어요. 질문 내용만 적어주세요!
+  - type: input
+    id: where
+    attributes:
+      label: 어디에서?
+      description: 토픽 / 퀴즈 번호 / 과제 번호
+      placeholder: "React · useReducer › 과제 01"
+    validations:
+      required: true
+  - type: textarea
+    id: question
+    attributes:
+      label: 질문
+      description: 무엇이 이해가 안 되나요? 어떻게 생각했는지도 적어주면 답하기 쉬워요.
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: 참고 정보 (자동 첨부)
+      description: 문제 내용, 내가 고른 답, 내 코드, 실패한 테스트 등
+      render: markdown
+    validations:
+      required: false

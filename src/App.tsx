@@ -1,4 +1,6 @@
 import { useEffect, useReducer } from 'react';
+import AskButton from './shared/AskButton';
+import { questionsListUrl } from './shared/ask';
 import AssignmentPage from './shared/AssignmentPage';
 import Md from './shared/Md';
 import ProgressPage from './shared/ProgressPage';
@@ -55,6 +57,10 @@ export default function App() {
           </a>
         </h1>
         {link({ kind: 'progress' }, '📊 내 진행 상황 · 공유')}
+        <a href={questionsListUrl} target="_blank" rel="noreferrer">
+          <span>💬 질문 게시판</span>
+          <span className="nav-extra">↗</span>
+        </a>
         {topics.map((t) => {
           const q = quizScore(t, p);
           return (
@@ -119,14 +125,25 @@ export default function App() {
         {page.kind === 'share' && <SharePage data={page.data} topics={topics} />}
         {page.kind === 'concepts' && topic && (
           <div className="readme">
+            <div className="page-actions">
+              <AskButton
+                label="❓ 개념 질문하기"
+                getContext={() => ({
+                  where: `${topic.title} › 핵심 개념`,
+                  short: `${topic.title} 개념`,
+                  details: '(질문하려는 부분을 위 질문 칸에 인용해 주세요)',
+                  hash: `#/t/${topic.id}`,
+                })}
+              />
+            </div>
             <Md>{topic.concepts}</Md>
           </div>
         )}
         {page.kind === 'quiz' && topic && (
-          <Quiz key={topic.id} topicId={topic.id} questions={topic.questions} levels={topic.levels} />
+          <Quiz key={topic.id} topicId={topic.id} topicTitle={topic.title} questions={topic.questions} levels={topic.levels} />
         )}
         {assignment && topic && (
-          <AssignmentPage key={topic.id + assignment.id} topicId={topic.id} assignment={assignment} />
+          <AssignmentPage key={topic.id + assignment.id} topicId={topic.id} topicTitle={topic.title} assignment={assignment} />
         )}
         {'topicId' in page && !topic && <p>존재하지 않는 페이지입니다. <a href="#/">홈으로</a></p>}
       </main>

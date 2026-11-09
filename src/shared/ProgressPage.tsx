@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { encodeShare, progress, useProgress } from './progress';
 import { assignmentScore, buildShareData, quizScore } from './score';
+import TransferSection from './TransferSection';
 import type { Topic } from './types';
 
 export default function ProgressPage({ topics }: { topics: Topic[] }) {
@@ -22,7 +23,7 @@ export default function ProgressPage({ topics }: { topics: Topic[] }) {
     <div className="readme">
       <h1>📊 내 진행 상황</h1>
       <p className="muted">
-        진행 상황과 작성한 코드는 <strong>이 브라우저에만</strong> 저장됩니다. 다른 사람에게 보여주려면 공유 링크를 보내세요.
+        진행 상황과 작성한 코드는 <strong>이 브라우저에만</strong> 저장됩니다. 다른 사람에게 보여주려면 공유 링크를, 다른 기기에서 이어 하려면 백업을 쓰세요.
       </p>
 
       <section className="card">
@@ -41,6 +42,8 @@ export default function ProgressPage({ topics }: { topics: Topic[] }) {
         </div>
         <p className="muted small-text">링크에는 점수만 들어 있고, 작성한 코드는 포함되지 않습니다.</p>
       </section>
+
+      <TransferSection />
 
       {topics.map((t) => {
         const q = quizScore(t, p);

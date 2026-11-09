@@ -1,0 +1,23 @@
+name: 🐞 문제/정답 오류 신고
+description: 퀴즈 정답이 틀렸거나, 과제 테스트가 이상하거나, 설명에 오타가 있어요
+title: "[오류] "
+labels: ["content"]
+body:
+  - type: input
+    id: where
+    attributes:
+      label: 어디에서?
+      placeholder: "React · useReducer › 퀴즈 Q7"
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: 무엇이 잘못됐나요?
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: 참고 정보 (자동 첨부)
+      render: markdown

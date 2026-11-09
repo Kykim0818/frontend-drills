@@ -8,7 +8,8 @@
     "build": "tsc --noEmit && vite build",
     "typecheck": "tsc --noEmit",
     "test": "vitest /assignments/",
-    "test:solutions": "vitest run /solutions/"
+    "test:solutions": "vitest run /solutions/",
+    "test:app": "vitest run src/shared"
   },
   "dependencies": {
     "@codemirror/lang-javascript": "^6.2.5",

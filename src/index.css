@@ -1391,9 +1391,36 @@ input[type='radio'] {
 /* ───────────────────────── 반응형 ───────────────────────── */
 
 @media (max-width: 900px) {
+  :root {
+    --code-size: 12.5px;
+  }
+  /* 모바일에서는 코드 블록을 가로 스크롤 대신 줄바꿈 */
+  .prose pre,
+  .question pre,
+  .results pre,
+  .explain pre,
+  .ask-details {
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    word-break: normal;
+    overflow-x: hidden;
+    tab-size: 2;
+  }
+  /* 표도 화면 폭에 맞추고 셀 안에서 줄바꿈 */
   .prose table {
-    display: block;
-    overflow-x: auto;
+    font-size: 0.85em;
+  }
+  .prose th,
+  .prose td {
+    padding: 7px 8px;
+    white-space: normal;
+    /* 글자는 단어 단위로(정말 안 들어갈 때만 자름), 긴 코드 이름만 아무 데서나 줄바꿈 */
+    overflow-wrap: break-word;
+  }
+  .prose td code,
+  .prose th code {
+    white-space: normal;
+    overflow-wrap: anywhere;
   }
   .crumbs {
     display: none;

@@ -1,5 +1,5 @@
 {
-  "name": "usereducer-playground",
+  "name": "frontend-drills",
   "private": true,
   "version": "1.0.0",
   "type": "module",
@@ -7,9 +7,8 @@
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
     "typecheck": "tsc --noEmit",
-    "test": "vitest src/assignments",
-    "test:one": "vitest",
-    "test:solutions": "vitest run src/solutions"
+    "test": "vitest /assignments/",
+    "test:solutions": "vitest run /solutions/"
   },
   "dependencies": {
     "react": "^19.3.1",

@@ -138,3 +138,10 @@ input, textarea, select {
   .preview { position: static; }
   .messenger { flex-direction: column; }
 }
+
+/* topics */
+.sidebar .brand { font-size: 1.15rem; font-weight: 700; padding: 0; }
+.topic-nav { display: flex; flex-direction: column; gap: 2px; }
+.topic-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; }
+.topic-card { display: flex; flex-direction: column; gap: 6px; text-align: left; margin: 0; }
+.topic-emoji { font-size: 1.8rem; }

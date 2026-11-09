@@ -1,6 +1,20 @@
 import { Component, useEffect, useMemo, useReducer, useRef, useState, type ComponentType, type ReactNode } from 'react';
-import { Panel, PanelGroup, PanelResizeHandle, type ImperativePanelGroupHandle } from 'react-resizable-panels';
-import { ResetIcon } from './icons';
+import {
+  Panel,
+  PanelGroup,
+  PanelResizeHandle,
+  type ImperativePanelGroupHandle,
+  type ImperativePanelHandle,
+} from 'react-resizable-panels';
+import {
+  BookIcon,
+  ChevronDownIcon,
+  ChevronsLeftIcon,
+  ChevronUpIcon,
+  MaximizeIcon,
+  MinimizeIcon,
+  ResetIcon,
+} from './icons';
 import { MOBILE_QUERY, useMediaQuery } from './useMediaQuery';
 import AskButton from './AskButton';
 import { codeBlock, type AskContext } from './ask';
@@ -218,6 +232,7 @@ export default function AssignmentPage({ topicId, topicTitle, assignment }: Page
 
   async function handleGrade() {
     dispatch({ type: 'grading_started' });
+    if (outputRef.current?.isCollapsed()) outputRef.current.expand();
     try {
       const outcome = await gradeInIframe(topicId, assignment.id, state.files);
       dispatch({ type: 'grading_finished', outcome });
@@ -266,29 +281,87 @@ export default function AssignmentPage({ topicId, topicTitle, assignment }: Page
   const isMobile = useMediaQuery(MOBILE_QUERY);
   const outerRef = useRef<ImperativePanelGroupHandle>(null);
   const innerRef = useRef<ImperativePanelGroupHandle>(null);
+  const readmeRef = useRef<ImperativePanelHandle>(null);
+  const outputRef = useRef<ImperativePanelHandle>(null);
+  const beforeMaximize = useRef<number[] | null>(null);
+  const [readmeCollapsed, setReadmeCollapsed] = useState(false);
+  const [outputCollapsed, setOutputCollapsed] = useState(false);
+  const [outputSize, setOutputSize] = useState<number>(LAYOUT.inner[1]);
+  const outputMaximized = !outputCollapsed && outputSize >= OUTPUT_MAX - 0.5;
   const passedNow = state.outcome && !state.outcome.compileError ? state.outcome.results.filter((r) => r.ok).length : null;
 
   function resetLayout() {
+    beforeMaximize.current = null;
     outerRef.current?.setLayout(LAYOUT.outer);
     innerRef.current?.setLayout(LAYOUT.inner);
   }
 
+  function toggleReadme() {
+    const panel = readmeRef.current;
+    if (!panel) return;
+    if (panel.isCollapsed()) panel.expand();
+    else panel.collapse();
+  }
+
+  function toggleOutput() {
+    const panel = outputRef.current;
+    if (!panel) return;
+    if (panel.isCollapsed()) panel.expand();
+    else panel.collapse();
+  }
+
+  function toggleMaximizeOutput() {
+    const group = innerRef.current;
+    if (!group) return;
+    if (outputMaximized) {
+      group.setLayout(beforeMaximize.current ?? LAYOUT.inner);
+      beforeMaximize.current = null;
+    } else {
+      const now = group.getLayout();
+      // 접혀 있던 상태에서 최대화했다가 되돌리면 적당한 크기로 돌아오게
+      beforeMaximize.current = outputRef.current?.isCollapsed() ? LAYOUT.inner : now;
+      group.setLayout([100 - OUTPUT_MAX, OUTPUT_MAX]);
+    }
+  }
+
+  function selectOutputTab(tab: State['outputTab']) {
+    dispatch({ type: 'output_tab_changed', tab });
+    if (outputRef.current?.isCollapsed()) outputRef.current.expand();
+  }
+
   const readme = (
-    <div className="pane-scroll">
-      <div className="page prose assignment-readme">
-        {best && (
-          <p className={best.passed === best.total ? 'badge ok not-prose' : 'badge not-prose'}>
-            최고 점수 {best.passed} / {best.total}
-          </p>
-        )}
-        <Md>{assignment.readme}</Md>
+    <section className="pane readme-pane" aria-label="과제 설명">
+      {!isMobile && (
+        <div className="pane-header pane-title">
+          <span className="pane-title-text">
+            <BookIcon size={14} /> 과제 설명
+          </span>
+          <button className="icon-button" onClick={toggleReadme} title="설명 접기" aria-label="설명 접기">
+            <ChevronsLeftIcon size={15} />
+          </button>
+        </div>
+      )}
+      <div className="pane-scroll">
+        <div className="page prose assignment-readme">
+          {best && (
+            <p className={best.passed === best.total ? 'badge ok not-prose' : 'badge not-prose'}>
+              최고 점수 {best.passed} / {best.total}
+            </p>
+          )}
+          <Md>{assignment.readme}</Md>
+        </div>
       </div>
-    </div>
+    </section>
   );
 
   const editor = (
     <section className="pane editor-pane" aria-label="코드 편집기">
       <div className="pane-header">
+        {readmeCollapsed && (
+          <button className="rail-button" onClick={toggleReadme} title="과제 설명 펼치기" aria-label="과제 설명 펼치기">
+            <BookIcon size={14} /> 설명
+          </button>
+        )}
         <div className="file-tabs" role="tablist" aria-label="파일">
           {Object.keys(visibleFiles).map((f) => (
             <button
@@ -343,33 +416,57 @@ export default function AssignmentPage({ topicId, topicTitle, assignment }: Page
     </section>
   );
 
-  const output = (
-    <section className="pane output-pane" aria-label="결과">
-      <div className="pane-header">
-        <div className="file-tabs sans" role="tablist" aria-label="결과 보기">
-          {!showingSolution && (
-            <button
-              role="tab"
-              aria-selected={state.outputTab === 'results'}
-              onClick={() => dispatch({ type: 'output_tab_changed', tab: 'results' })}
-            >
-              채점 결과
-              {passedNow !== null && (
-                <span className={passedNow === state.outcome!.results.length ? 'pill ok' : 'pill'}>
-                  {passedNow}/{state.outcome!.results.length}
-                </span>
-              )}
-            </button>
-          )}
+  const outputBar = (
+    <div className="pane-header output-bar">
+      <div className="file-tabs sans" role="tablist" aria-label="결과 보기">
+        {!showingSolution && (
           <button
             role="tab"
-            aria-selected={state.outputTab === 'preview'}
-            onClick={() => dispatch({ type: 'output_tab_changed', tab: 'preview' })}
+            aria-selected={!outputCollapsed && state.outputTab === 'results'}
+            onClick={() => selectOutputTab('results')}
           >
-            {showingSolution ? '정답 미리보기' : '미리보기'}
+            채점 결과
+            {passedNow !== null && (
+              <span className={passedNow === state.outcome!.results.length ? 'pill ok' : 'pill'}>
+                {passedNow}/{state.outcome!.results.length}
+              </span>
+            )}
+          </button>
+        )}
+        <button
+          role="tab"
+          aria-selected={!outputCollapsed && state.outputTab === 'preview'}
+          onClick={() => selectOutputTab('preview')}
+        >
+          {showingSolution ? '정답 미리보기' : '미리보기'}
+        </button>
+      </div>
+      {!isMobile && (
+        <div className="pane-tools">
+          <button
+            className="icon-button"
+            onClick={toggleMaximizeOutput}
+            title={outputMaximized ? '결과 영역 원래 크기로' : '결과 영역 크게 보기'}
+            aria-label={outputMaximized ? '결과 영역 원래 크기로' : '결과 영역 크게 보기'}
+          >
+            {outputMaximized ? <MinimizeIcon size={14} /> : <MaximizeIcon size={14} />}
+          </button>
+          <button
+            className="icon-button"
+            onClick={toggleOutput}
+            title={outputCollapsed ? '결과 영역 펼치기' : '결과 영역 접기'}
+            aria-label={outputCollapsed ? '결과 영역 펼치기' : '결과 영역 접기'}
+            aria-expanded={!outputCollapsed}
+          >
+            {outputCollapsed ? <ChevronUpIcon size={15} /> : <ChevronDownIcon size={15} />}
           </button>
         </div>
-      </div>
+      )}
+    </div>
+  );
+
+  const outputBody = (
+    <section className="pane output-pane" aria-label="결과">
       <div className="pane-body">
         {state.outputTab === 'results' && !showingSolution ? (
           <Results state={state} />
@@ -387,14 +484,25 @@ export default function AssignmentPage({ topicId, topicTitle, assignment }: Page
       <div className="assignment-stack">
         {readme}
         {editor}
-        {output}
+        {outputBar}
+        {outputBody}
       </div>
     );
   }
 
   return (
     <PanelGroup ref={outerRef} direction="horizontal" autoSaveId="fd:assignment" className="assignment-layout">
-      <Panel id="readme" order={1} defaultSize={LAYOUT.outer[0]} minSize={20}>
+      <Panel
+        ref={readmeRef}
+        id="readme"
+        order={1}
+        defaultSize={LAYOUT.outer[0]}
+        minSize={20}
+        collapsible
+        collapsedSize={0}
+        onCollapse={() => setReadmeCollapsed(true)}
+        onExpand={() => setReadmeCollapsed(false)}
+      >
         {readme}
       </Panel>
       <PanelResizeHandle className="resize-handle vertical" />
@@ -404,8 +512,21 @@ export default function AssignmentPage({ topicId, topicTitle, assignment }: Page
             {editor}
           </Panel>
           <PanelResizeHandle className="resize-handle horizontal" />
-          <Panel id="output" order={2} defaultSize={LAYOUT.inner[1]} minSize={12}>
-            {output}
+          {/* 결과 탭 막대는 패널 밖에 둬서, 결과 영역을 접어도 항상 보이게 */}
+          {outputBar}
+          <Panel
+            ref={outputRef}
+            id="output"
+            order={2}
+            defaultSize={LAYOUT.inner[1]}
+            minSize={10}
+            collapsible
+            collapsedSize={0}
+            onCollapse={() => setOutputCollapsed(true)}
+            onExpand={() => setOutputCollapsed(false)}
+            onResize={(size) => setOutputSize(size)}
+          >
+            {outputBody}
           </Panel>
         </PanelGroup>
       </Panel>
@@ -414,3 +535,5 @@ export default function AssignmentPage({ topicId, topicTitle, assignment }: Page
 }
 
 const LAYOUT = { outer: [40, 60], inner: [60, 40] };
+/** 결과 영역 '크게 보기' 때 비율 (편집기 최소 크기 25% 를 남김) */
+const OUTPUT_MAX = 75;

@@ -46,3 +46,39 @@ export const ResetIcon = ({ size }: P) => (
     <path d="M3 3v5h5" />
   </svg>
 );
+export const ChevronsLeftIcon = ({ size }: P) => (
+  <svg {...base(size)}>
+    <path d="m11 17-5-5 5-5M18 17l-5-5 5-5" />
+  </svg>
+);
+export const ChevronsRightIcon = ({ size }: P) => (
+  <svg {...base(size)}>
+    <path d="m13 17 5-5-5-5M6 17l5-5-5-5" />
+  </svg>
+);
+export const ChevronDownIcon = ({ size }: P) => (
+  <svg {...base(size)}>
+    <path d="m6 9 6 6 6-6" />
+  </svg>
+);
+export const ChevronUpIcon = ({ size }: P) => (
+  <svg {...base(size)}>
+    <path d="m18 15-6-6-6 6" />
+  </svg>
+);
+export const MaximizeIcon = ({ size }: P) => (
+  <svg {...base(size)}>
+    <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" />
+  </svg>
+);
+export const MinimizeIcon = ({ size }: P) => (
+  <svg {...base(size)}>
+    <path d="M4 14h6v6M20 10h-6V4M14 10l7-7M3 21l7-7" />
+  </svg>
+);
+export const BookIcon = ({ size }: P) => (
+  <svg {...base(size)}>
+    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5v14z" />
+    <path d="M6.5 17A2.5 2.5 0 0 0 4 19.5 2.5 2.5 0 0 0 6.5 22H20v-5" />
+  </svg>
+);

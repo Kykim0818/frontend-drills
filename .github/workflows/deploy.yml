@@ -25,6 +25,7 @@ jobs:
           cache: npm
       - run: npm ci
       # 모범 답안이 모든 채점 테스트를 통과하는지 먼저 확인
+      - run: npm run test:app
       - run: npm run test:solutions
       - run: npm run build
       - uses: actions/upload-pages-artifact@v3
